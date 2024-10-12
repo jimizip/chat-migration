@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>채팅</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f2f2f2;
+        padding: 20px;
+        margin: 0;
+      }
+
+      h1 {
+        color: #333;
+        text-align: center;
+      }
+
+      h2 {
+        text-align: center;
+      }
+
+      form {
+        margin-bottom: 20px;
+      }
+
+      label {
+        font-weight: bold;
+      }
+
+      input[type='text'],
+      button {
+        padding: 10px;
+        font-size: 16px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+
+      input[type='text'] {
+        width: 200px;
+      }
+
+      button {
+        background-color: #4caf50;
+        color: white;
+        cursor: pointer;
+      }
+
+      ul {
+        list-style-type: none;
+        padding: 0;
+      }
+
+      li {
+        background-color: #fff;
+        padding: 10px;
+        margin-bottom: 10px;
+        border-radius: 4px;
+      }
+
+      /* 채팅 메시지 스타일 */
+      .chat-message {
+        color: #333;
+        font-size: 16px;
+      }
+
+      /* 좋아요 정보 스타일 */
+      .like-info {
+        display: flex;
+        align-items: center;
+        color: #666;
+        font-size: 14px;
+      }
+
+      /* 좋아요 개수 스타일 */
+      .like-count {
+        font-size: 14px;
+        margin-right: 5px;
+        font-weight: bold;
+      }
+
+      /* 좋아요 아이콘 스타일 */
+      .like-icon {
+        font-size: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>채팅</h1>
+    <h2>{{notice}}</h2>
+
+    <ul id="chatMessages">
+      {{#each messages}}
+        <li>
+          {{sender.name}}: {{content}} | liked: {{liked}} count: {{likeCount}}
+        </li>
+      {{/each}}
+    </ul>
+
+    <form id="chatForm">
+      <label for="message">메시지:</label>
+      <input type="text" id="message" required />
+      <button type="submit">전송</button>
+    </form>
+
+    <script src="https://cdn.socket.io/4.3.2/socket.io.min.js" integrity="sha384-KAZ4DtjNhLChOB/hxXuKqhMLYvx3b5MlT55xPEiNmREKRzeEm+RVPlTnAn0ajQNs" crossorigin="anonymous"></script>
+    <script>
+      const chatForm = document.querySelector('#chatForm');
+      const messageInput = document.querySelector('#message');
+      const chatMessages = document.querySelector('#chatMessages');
+      const roomId = {{roomId}};
+      const userId = {{userId}};
+      
+      const socket = new io('http://localhost:3001/'); // WebSocket 서버 주소에 맞게 수정해주세요.
+      
+      console.log('roomId', roomId)
+      console.log('userId', userId)
+
+      socket.on('connect', () => {
+        socket.emit('join', {
+          roomId
+        })
+      })
+
+      chatForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+
+        const message = messageInput.value;
+
+        const chatMessage = {
+          roomId,
+          userId,
+          message,
+        };
+
+        socket.emit('message', chatMessage);
+
+        messageInput.value = '';
+      });
+
+      socket.on('message', (event) => {
+        console.log(event.chat)
+        
+        const message = event.chat
+        appendMessage(message)
+      });
+
+      function appendMessage(message) {
+        const listItem = document.createElement('li');
+        listItem.textContent = `${message.sender.name}: ${message.content} | liked: ${message.liked} count: ${message.likeCount}`;
+        chatMessages.appendChild(listItem);
+        
+        if (chatMessages.children.length > 10) {
+          chatMessages.removeChild(chatMessages.children[0]);
+        }
+      }
+    </script>
+  </body>
+</html>
